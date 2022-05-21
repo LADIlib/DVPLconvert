@@ -37,36 +37,18 @@ public static partial class Program
                 }
         }
     }
+    private static unsafe uint CalcCRC(byte[] b) { fixed (byte* ptr = &b[0]) return CRC32.calculate_crc32(ptr, b.Length); }
     private static unsafe void CompressDVPLFile(string path)
     {
-        
-        DVPLHeader Header;
-
         byte[] Data = File.ReadAllBytes(path);
-        if (Data.Length == 0) 
-        { 
-            Header = new DVPLHeader
-            {
-                sizeUncompressed = 0,
-                marker = "DVPL",
-                sizeCompressed = 0,
-                storeType = CompressorType.None,
-                crc32Compressed = 0
-            };
-            Console.WriteLine($"Warning {path} !! Size of compressed arc is 0");
-        }
-        else
+        DVPLHeader Header = new()
         {
-            fixed (byte* ptr = &Data[0])
-                Header = new DVPLHeader
-                {
-                    sizeUncompressed = Data.Length,
-                    marker = "DVPL",
-                    sizeCompressed = Data.Length,
-                    storeType = Data.Length == Data.Length ? CompressorType.None : CompressorType.Lz4,
-                    crc32Compressed = CRC32.calculate_crc32(ptr, Data.Length)
-                };
-        }
+            sizeCompressed = Data.Length,
+            sizeUncompressed = Data.Length,
+            storeType = CompressorType.None,
+            marker = "DVPL",
+            crc32Compressed = Data.Length == 0 ? 0 : CalcCRC(Data),
+        };
         Console.WriteLine(Header);
         File.Delete(path);
         File.WriteAllBytes(path+".dvpl", Data.Concat(Header.ToByteArray()).ToArray());
