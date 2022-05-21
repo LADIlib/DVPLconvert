@@ -35,22 +35,24 @@ public static partial class Program
     }
     private static unsafe void DecompressDVPLFile(string path)
     {
-        byte[] DVPLFile, UncompressedData;
-        DVPLHeader Header;
+        byte[] UncompressedData;
 
-        DVPLFile = File.ReadAllBytes(path);
-        Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[^20..]);
-        fixed (byte* ptr = &DVPLFile[0])
-            if (CRC32.crc32(0, ptr, Header._compressed_size) != Header._crc_hash)
-                throw new Exception("CRC hash mismatch");
+        byte[] DVPLFile = File.ReadAllBytes(path);
+        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[^20..]);
+        fixed (byte* ptr = &DVPLFile[0]) if (CRC32.calculate_crc32(ptr, Header.sizeCompressed) != Header.crc32Compressed) throw new Exception("CRC hash mismatch");
         Console.WriteLine(Header);
-        if (Header._store_type == StoreType.NotCompressed)
-            UncompressedData = DVPLFile[..Header._compressed_size];
-        else 
+        switch (Header.storeType)
         {
-            UncompressedData = new byte[Header._uncompressed_size];
-            LZ4Codec.Decode(DVPLFile, 0, Header._compressed_size, UncompressedData, 0, Header._uncompressed_size);
-            if (UncompressedData.Length != Header._uncompressed_size) throw new Exception("Length is wrong");
+            case CompressorType.Lz4HC:
+            case CompressorType.Lz4:
+                UncompressedData = new byte[Header.sizeUncompressed];
+                LZ4Codec.Decode(DVPLFile, 0, Header.sizeCompressed, UncompressedData, 0, Header.sizeUncompressed);
+                if (UncompressedData.Length != Header.sizeUncompressed) throw new Exception("Length is wrong");
+                break;
+            case CompressorType.None:
+                UncompressedData = DVPLFile[..Header.sizeCompressed];
+                break;
+            default: throw new NotImplementedException($"{Header.storeType} arcs are not supported yet");
         }
         File.Delete(path);
         File.WriteAllBytes(path.Replace(".dvpl", String.Empty), UncompressedData);

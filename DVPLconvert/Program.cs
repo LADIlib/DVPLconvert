@@ -11,13 +11,7 @@ public static partial class Program
 
     public static void Main(string[] args)
     {
-        //args = new string[] { @"E:\SteamLibrary\steamapps\common\World of Tanks Blitz\Data\3d\Maps\32_faust_fa_night\landscape" };
-        if (args.Length <= 0)
-        {
-            Console.WriteLine("No input files/folders given");
-            Console.ReadLine();
-            return;
-        }
+        if (args.Length <= 0) throw new ArgumentException("No input files/folders given");
         bool recursive = false;
         bool ForceCompress = false;
         bool ForceDecompress = false;
