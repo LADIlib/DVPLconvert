@@ -8,7 +8,8 @@ public static partial class Program
         {
             try
             {
-                Console.WriteLine($"Decompressing {file}");
+                if (Verbose)
+                    Console.WriteLine($"Decompressing {file}");
                 DecompressDVPLFile(file);
             }
             catch (Exception ex)
@@ -19,12 +20,14 @@ public static partial class Program
     }
     private static void DecompressDVPLFolder(string path)
     {
+
         Console.WriteLine("Starting decompressing folder");
         foreach (string file in Directory.GetFiles(path, "*.dvpl"))
         {
             try
             {
-                Console.WriteLine($"Decompressing {file}");
+                if (Verbose)
+                    Console.WriteLine($"Decompressing {file}");
                 DecompressDVPLFile(file);
             }
             catch (Exception ex)
@@ -40,7 +43,7 @@ public static partial class Program
         byte[] DVPLFile = File.ReadAllBytes(path);
         DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[^20..]);
         fixed (byte* ptr = &DVPLFile[0]) if (CRC32.calculate_crc32(ptr, Header.sizeCompressed) != Header.crc32Compressed) throw new Exception("CRC hash mismatch");
-        Console.WriteLine(Header);
+        if(Verbose) Console.WriteLine(Header);
         switch (Header.storeType)
         {
             case CompressorType.Lz4HC:

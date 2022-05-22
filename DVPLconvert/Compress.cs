@@ -10,7 +10,8 @@ public static partial class Program
             if (ext != "dvpl")
                 try
                 {
-                    Console.WriteLine($"Compressing {file}");
+                    if (Verbose)
+                        Console.WriteLine($"Compressing {file}");
                     CompressDVPLFile(file);
                 }
                 catch (Exception ex)
@@ -28,7 +29,8 @@ public static partial class Program
             if (ext!="dvpl")
                 try
                 {
-                    Console.WriteLine($"Compressing {file}");
+                    if (Verbose)
+                        Console.WriteLine($"Compressing {file}");
                     CompressDVPLFile(file);
                 }
                 catch (Exception ex)
@@ -49,7 +51,8 @@ public static partial class Program
             marker = "DVPL",
             crc32Compressed = Data.Length == 0 ? 0 : CalcCRC(Data),
         };
-        Console.WriteLine(Header);
+        if (Verbose)
+            Console.WriteLine(Header);
         File.Delete(path);
         File.WriteAllBytes(path+".dvpl", Data.Concat(Header.ToByteArray()).ToArray());
     }

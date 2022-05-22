@@ -8,6 +8,7 @@ public static partial class Program
         try { return ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)?1:0; }
         catch { return -1; }
     }
+    private static bool Verbose = false;
 
     public static void Main(string[] args)
     {
@@ -18,6 +19,8 @@ public static partial class Program
         bool CheckFolder = false;
         foreach(var arg in args)
         {
+            if (!Verbose)
+                Verbose = arg == "-v";
             if(!recursive)
                 recursive = arg == "-r";
             if (!ForceCompress)
@@ -49,38 +52,31 @@ public static partial class Program
                 foreach (string file in Directory.GetFiles(arg, "*", SearchOption.AllDirectories))
                 {
                     var ext = file.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
-                    if(!dic.ContainsKey(ext))
+                    if (!dic.ContainsKey(ext))
                         dic[ext] = 0;
                     dic[ext]++;
                 }
-                if ((dic.ContainsKey("dvpl") || ForceDecompress)&&!ForceCompress)
-                {
+                if ((dic.ContainsKey("dvpl") || ForceDecompress) && !ForceCompress)
                     if (recursive) DecompressDVPLFolderRecursively(arg);
                     else DecompressDVPLFolder(arg);
-                }
                 else
-                {
                     if (recursive) CompressDVPLFolderRecursively(arg);
-                    else CompressDVPLFolder(arg);
-                }
+                else CompressDVPLFolder(arg);
                 recursive = false;
                 ForceCompress = false;
                 ForceDecompress = false;
             }
-            else if(ifo == 0)
+            else if (ifo == 0)
             {
                 var ext = arg.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
                 if (ext == "dvpl") DecompressDVPLFile(arg);
                 else CompressDVPLFile(arg);
             }
-            else if(ifo == -1)
+            else if (ifo == -1)
             {
-                Console.WriteLine("Got argument: "+arg);
+                if (Verbose) Console.WriteLine("Got argument: " + arg);
             }
-            else
-            {
-                throw new Exception("args broken");
-            }
+            else throw new Exception("args broken");
         }
         Console.WriteLine("All work done");
         Console.ReadLine();

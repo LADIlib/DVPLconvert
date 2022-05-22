@@ -1,12 +1,12 @@
 ﻿namespace DVPLconverter;
 public static partial class Program
 {
-    private enum CompressorType : int
+    private enum CompressorType : uint
     {
         None,
         Lz4,
         Lz4HC,
-        RFC1951, // deflate, inflate
+        RFC1951 // zip
     };
 
     [StructLayout(LayoutKind.Explicit, Size = 20, Pack = 1)]
@@ -18,7 +18,7 @@ public static partial class Program
 
         [FieldOffset(8)][MarshalAs(UnmanagedType.U4)] public uint crc32Compressed;
 
-        [FieldOffset(12)][MarshalAs(UnmanagedType.I4)] public CompressorType storeType;
+        [FieldOffset(12)][MarshalAs(UnmanagedType.U4)] public CompressorType storeType;
 
         [FieldOffset(16)][MarshalAs(UnmanagedType.ByValTStr, SizeConst = 4)] public string marker;
 
