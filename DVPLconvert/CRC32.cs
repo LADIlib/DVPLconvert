@@ -1,6 +1,4 @@
-﻿namespace DVPLconverter;
-
-public static class CRC32
+﻿public static class CRC32
 {
     static readonly uint[] crc32_tab = new uint[256] {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,

@@ -1,18 +1,27 @@
-﻿namespace DVPLconverter;
-public static partial class Program 
-{
-    private static unsafe T ByteArrayToStructure<T>(byte[] bytes) where T : struct{ fixed (byte* ptr = &bytes[0]) return (T)Marshal.PtrToStructure((IntPtr)ptr, typeof(T));}
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
-    private static int IsFolder(string path) 
-    {
-        try { return ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)?1:0; }
-        catch { return -1; }
-    }
+public static partial class Program
+{
     private static bool Verbose = false;
 
     public static void Main(string[] args)
-    {
-        if (args.Length <= 0) throw new ArgumentException("No input files/folders given");
+    { 
+        if (args.Length <= 0) 
+        {
+            Console.WriteLine(
+                @" Usage: [Arguments] <folder or file path>
+
+[other arguments] -v [other arguments] == Verbose, will print debug information while do all work
+[other arguments] -r [other arguments] <Folder path> == Enables recursive for given filder (required argument!!!)
+[other arguments] -c [other arguments] <Folder path> == Forces program to compress non .dvpl files to .dvpl
+[other arguments] -d [other arguments] <Folder path> == Forces program to decompress .dvpl files to non .dvpl
+[other arguments] -f <Folder path> == lists count of extentions of all files 
+"
+                );
+            throw new ArgumentException("No input files/folders/arguments given"); 
+        }
         bool recursive = false;
         bool ForceCompress = false;
         bool ForceDecompress = false;
@@ -21,7 +30,7 @@ public static partial class Program
         {
             if (!Verbose)
                 Verbose = arg == "-v";
-            if(!recursive)
+            if (!recursive)
                 recursive = arg == "-r";
             if (!ForceCompress)
                 ForceCompress = arg == "-c";
@@ -31,10 +40,10 @@ public static partial class Program
                 CheckFolder = arg == "-f";
             else
             {
-                Dictionary<string, uint> dic = new();
+                Dictionary<string, uint> dic = new Dictionary<string, uint>();
                 foreach (string file in Directory.GetFiles(arg, "*", SearchOption.AllDirectories))
                 {
-                    var ext = file.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
+                    var ext = GetFileExtention(file);
                     if (!dic.ContainsKey(ext))
                         dic[ext] = 0;
                     dic[ext]++;
@@ -43,15 +52,16 @@ public static partial class Program
                 {
                     Console.WriteLine($"{kv.Key} : {kv.Value}");
                 }
+                CheckFolder = false;
                 continue;
             }
             var ifo = IsFolder(arg);
             if (ifo == 1)
             {
-                Dictionary<string, uint> dic = new();
+                Dictionary<string, uint> dic = new Dictionary<string, uint>();
                 foreach (string file in Directory.GetFiles(arg, "*", SearchOption.AllDirectories))
                 {
-                    var ext = file.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
+                    var ext = GetFileExtention(file);
                     if (!dic.ContainsKey(ext))
                         dic[ext] = 0;
                     dic[ext]++;
@@ -68,7 +78,7 @@ public static partial class Program
             }
             else if (ifo == 0)
             {
-                var ext = arg.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
+                var ext = GetFileExtention(arg);
                 if (ext == "dvpl") DecompressDVPLFile(arg);
                 else CompressDVPLFile(arg);
             }

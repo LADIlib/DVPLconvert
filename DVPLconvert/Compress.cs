@@ -1,4 +1,7 @@
-﻿namespace DVPLconverter;
+﻿using System;
+using System.IO;
+using System.Linq;
+
 public static partial class Program
 {
     private static void CompressDVPLFolderRecursively(string path)
@@ -6,7 +9,7 @@ public static partial class Program
         Console.WriteLine("Starting compressing folder recursively");
         foreach (string file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
         {
-            var ext = file.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
+            var ext = GetFileExtention(file);
             if (ext != "dvpl")
                 try
                 {
@@ -25,7 +28,7 @@ public static partial class Program
         Console.WriteLine("Starting compressing folder");
         foreach (string file in Directory.GetFiles(path, "*"))
         {
-            var ext = file.Split('.', StringSplitOptions.RemoveEmptyEntries).Last();
+            var ext = GetFileExtention(file);
             if (ext!="dvpl")
                 try
                 {
@@ -43,7 +46,7 @@ public static partial class Program
     private static unsafe void CompressDVPLFile(string path)
     {
         byte[] Data = File.ReadAllBytes(path);
-        DVPLHeader Header = new()
+        DVPLHeader Header = new DVPLHeader()
         {
             sizeCompressed = Data.Length,
             sizeUncompressed = Data.Length,

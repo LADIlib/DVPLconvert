@@ -1,4 +1,8 @@
-﻿namespace DVPLconverter;
+﻿
+using System;
+using System.IO;
+using System.Linq;
+
 public static partial class Program
 {
     private static void DecompressDVPLFolderRecursively(string path)
@@ -41,7 +45,7 @@ public static partial class Program
         byte[] UncompressedData;
 
         byte[] DVPLFile = File.ReadAllBytes(path);
-        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[^20..]);
+        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[Range.StartAt(DVPLFile.Length-20)]);
         fixed (byte* ptr = &DVPLFile[0]) if (CRC32.calculate_crc32(ptr, Header.sizeCompressed) != Header.crc32Compressed) throw new Exception("CRC hash mismatch");
         if(Verbose) Console.WriteLine(Header);
         switch (Header.storeType)
@@ -49,11 +53,11 @@ public static partial class Program
             case CompressorType.Lz4HC:
             case CompressorType.Lz4:
                 UncompressedData = new byte[Header.sizeUncompressed];
-                LZ4Codec.Decode(DVPLFile, 0, Header.sizeCompressed, UncompressedData, 0, Header.sizeUncompressed);
+                K4os.Compression.LZ4.LZ4Codec.Decode(DVPLFile, 0, Header.sizeCompressed, UncompressedData, 0, Header.sizeUncompressed);
                 if (UncompressedData.Length != Header.sizeUncompressed) throw new Exception("Length is wrong");
                 break;
             case CompressorType.None:
-                UncompressedData = DVPLFile[..Header.sizeCompressed];
+                UncompressedData = DVPLFile[new Range(0, Header.sizeCompressed)].ToArray();
                 break;
             default: throw new NotImplementedException($"{Header.storeType} arcs are not supported yet");
         }

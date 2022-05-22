@@ -1,4 +1,6 @@
-﻿namespace DVPLconverter;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 public static partial class Program
 {
     private enum CompressorType : uint
@@ -25,7 +27,7 @@ public static partial class Program
         public override string ToString()
         {
             return
-@$"Unpacked size: {sizeUncompressed}
+$@"Unpacked size: {sizeUncompressed}
 Packed size: {sizeCompressed}
 CRC hash: {crc32Compressed}
 Package type: {storeType}
@@ -38,7 +40,7 @@ Package type: {storeType}
             .Concat(BitConverter.GetBytes(sizeCompressed))
             .Concat(BitConverter.GetBytes(crc32Compressed))
             .Concat(BitConverter.GetBytes((int)storeType))
-            .Concat(Encoding.ASCII.GetBytes(marker)).ToArray();
+            .Concat(System.Text.Encoding.ASCII.GetBytes(marker)).ToArray();
         }
     }
 }

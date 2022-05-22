@@ -2,21 +2,24 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	  <TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWin32Manifest>true</NoWin32Manifest>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Nullable>disable</Nullable>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
-	<ItemGroup>
-		<Using Include="System.Runtime.InteropServices" />
-		<Using Include="System.Text" />
-		<Using Include="K4os.Compression.LZ4" />
-
+	<ItemGroup Condition=" '$(TargetFramework)' != 'net472' ">
+		<PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
 	</ItemGroup>
 
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
+		<PackageReference Include="K4os.Compression.LZ4" Version="1.1.11" />
+		<PackageReference Include="IndexRange" Version="1.0.2" />
+	</ItemGroup>
 	<ItemGroup>
-    <PackageReference Include="K4os.Compression.LZ4" Version="1.2.16" />
+    
   </ItemGroup>
 
 </Project>
