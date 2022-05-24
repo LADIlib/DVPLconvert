@@ -6,7 +6,7 @@ Tool that can compress and decompress DVPL formatted files of WoTB.
 For build you need
 `.NET 4.7.2` or `.NET 5.0` or `.NET 6.0` and `Visual Studio 2022`
 
-If you dont have any of them - you can download latest release from **[Releases](https://github.com/LADIlib/DVPLconvert/releases "Releases")**
+If you dont have any of them - you can download latest release from **[Releases](https://github.com/LADIlib/DVPLconvert/releases/latest "Releases")**
 
 ## Usage
 
