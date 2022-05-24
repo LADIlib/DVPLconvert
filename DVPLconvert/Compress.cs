@@ -1,10 +1,11 @@
-﻿using System;
+﻿using K4os.Compression.LZ4;
+using System;
 using System.IO;
 using System.Linq;
 
 public static partial class Program
 {
-    private static void CompressDVPLFolderRecursively(string path)
+    static void CompressDVPLFolderRecursively(string path)
     {
         Console.WriteLine("Starting compressing folder recursively");
         foreach (string file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
@@ -23,7 +24,7 @@ public static partial class Program
                 }
         }
     }
-    private static void CompressDVPLFolder(string path)
+    static void CompressDVPLFolder(string path)
     {
         Console.WriteLine("Starting compressing folder");
         foreach (string file in Directory.GetFiles(path, "*"))
@@ -42,21 +43,43 @@ public static partial class Program
                 }
         }
     }
-    private static unsafe uint CalcCRC(byte[] b) { fixed (byte* ptr = &b[0]) return CRC32.calculate_crc32(ptr, b.Length); }
-    private static unsafe void CompressDVPLFile(string path)
+    static unsafe void CompressDVPLFile(string path)
     {
         byte[] Data = File.ReadAllBytes(path);
-        DVPLHeader Header = new DVPLHeader()
+        if (Data == null||Data.Length<0) throw new ArgumentNullException(nameof(Data));
+        byte[] OutData;
+        DVPLHeader Header;
+        if (Compress)
         {
-            sizeCompressed = Data.Length,
-            sizeUncompressed = Data.Length,
-            storeType = CompressorType.None,
-            marker = "DVPL",
-            crc32Compressed = Data.Length == 0 ? 0 : CalcCRC(Data),
-        };
+            OutData = new byte[LZ4Codec.MaximumOutputSize(Data.Length)];
+            var OutLen = LZ4Codec.Encode(Data, OutData, LZ4Level.L12_MAX);
+            if (OutLen < 0) throw new Exception("LZ4 encode failed");
+            Array.Resize(ref OutData, OutLen);
+            if (OutLen > Data.Length) throw new Exception("WTF?");
+            Header = new DVPLHeader()
+            {
+                sizeCompressed = OutData.Length,
+                sizeUncompressed = Data.Length,
+                storeType = OutData.Length == Data.Length ? CompressorType.None : CompressorType.Lz4HC,
+                crc32Compressed = CalcCRC(OutData),
+                marker = "DVPL".ToCharArray()
+            };
+        }
+        else
+        {
+            OutData = Data;
+            Header = new DVPLHeader()
+            {
+                sizeCompressed = Data.Length,
+                sizeUncompressed = Data.Length,
+                storeType = CompressorType.None,
+                marker = "DVPL".ToCharArray(),
+                crc32Compressed = Data.Length == 0 ? 0 : CalcCRC(Data),
+            };
+        }
         if (Verbose)
             Console.WriteLine(Header);
         File.Delete(path);
-        File.WriteAllBytes(path+".dvpl", Data.Concat(Header.ToByteArray()).ToArray());
+        File.WriteAllBytes(path+".dvpl", OutData.Concat(StructuteToByteArray(Header)).ToArray());
     }
 }

@@ -2,10 +2,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 public static partial class Program
 {
-    private static void DecompressDVPLFolderRecursively(string path)
+    static void DecompressDVPLFolderRecursively(string path)
     {
         Console.WriteLine("Starting decompressing folder recursively");
         foreach (string file in Directory.GetFiles(path, "*.dvpl", SearchOption.AllDirectories))
@@ -22,7 +23,7 @@ public static partial class Program
             }
         }
     }
-    private static void DecompressDVPLFolder(string path)
+    static void DecompressDVPLFolder(string path)
     {
 
         Console.WriteLine("Starting decompressing folder");
@@ -40,12 +41,11 @@ public static partial class Program
             }
         }
     }
-    private static unsafe void DecompressDVPLFile(string path)
+    static unsafe void DecompressDVPLFile(string path)
     {
         byte[] UncompressedData;
-
         byte[] DVPLFile = File.ReadAllBytes(path);
-        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile[Range.StartAt(DVPLFile.Length-20)]);
+        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile, DVPLFile.Length - Marshal.SizeOf(typeof(DVPLHeader)));
         fixed (byte* ptr = &DVPLFile[0]) if (CRC32.calculate_crc32(ptr, Header.sizeCompressed) != Header.crc32Compressed) throw new Exception("CRC hash mismatch");
         if(Verbose) Console.WriteLine(Header);
         switch (Header.storeType)

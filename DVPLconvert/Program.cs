@@ -4,20 +4,22 @@ using System.IO;
 
 public static partial class Program
 {
-    private static bool Verbose = false;
-
+    static bool Verbose = false;
+    static bool Compress = false;
     public static void Main(string[] args)
-    { 
+    {
+        CompressDVPLFile(@"E:\SteamLibrary\steamapps\common\World of Tanks Blitz\Data\regions_development.yaml");
         if (args.Length <= 0) 
         {
             Console.WriteLine(
                 @" Usage: [Arguments] <folder or file path>
 
-[other arguments] -v [other arguments] == Verbose, will print debug information while do all work
+ -v == Verbose, will print debug information while do all work
 [other arguments] -r [other arguments] <Folder path> == Enables recursive for given filder (required argument!!!)
 [other arguments] -c [other arguments] <Folder path> == Forces program to compress non .dvpl files to .dvpl
 [other arguments] -d [other arguments] <Folder path> == Forces program to decompress .dvpl files to non .dvpl
-[other arguments] -f <Folder path> == lists count of extentions of all files 
+ -f <Folder path> == lists count of extentions of all files 
+ -C == Enables compress ( MAY BREAK WEBP FILES !!! )
 "
                 );
             throw new ArgumentException("No input files/folders/arguments given"); 
@@ -36,6 +38,8 @@ public static partial class Program
                 ForceCompress = arg == "-c";
             if (!ForceDecompress)
                 ForceDecompress = arg == "-d";
+            if (!Compress)
+                Compress = arg == "-C";
             if(!CheckFolder)
                 CheckFolder = arg == "-f";
             else
@@ -79,7 +83,7 @@ public static partial class Program
             else if (ifo == 0)
             {
                 var ext = GetFileExtention(arg);
-                if (ext == "dvpl") DecompressDVPLFile(arg);
+                if (((ext == "dvpl") || ForceDecompress) && !ForceCompress) DecompressDVPLFile(arg);
                 else CompressDVPLFile(arg);
             }
             else if (ifo == -1)

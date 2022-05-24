@@ -5,14 +5,27 @@ using System.Runtime.InteropServices;
 
 public static partial class Program
 {
-    private static unsafe T ByteArrayToStructure<T>(byte[] bytes) where T : struct { fixed (byte* ptr = &bytes[0]) return (T)Marshal.PtrToStructure((IntPtr)ptr, typeof(T)); }
+    static unsafe T ByteArrayToStructure<T>(byte[] bytes,int start = 0) where T : struct
+    { 
+        fixed (byte* ptr = &bytes[start]) 
+            return Marshal.PtrToStructure<T>((IntPtr)ptr); 
+    }
 
-    private static int IsFolder(string path)
+    static unsafe byte[] StructuteToByteArray<T>(T str) where T : struct
+    {
+        var buf = new byte[Marshal.SizeOf(typeof(T))];
+        fixed (byte* ptr = buf)
+            Marshal.StructureToPtr(str, (IntPtr)ptr, true);
+        return buf;
+    }
+
+    static int IsFolder(string path)
     {
         try { return ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory) ? 1 : 0; }
         catch { return -1; }
     }
-    private static string GetFileExtention(string file) => file.Split(new char[]{'.'}, StringSplitOptions.RemoveEmptyEntries).Last();
+    static string GetFileExtention(string file) => file.Split(new char[]{'.'}, StringSplitOptions.RemoveEmptyEntries).Last();
+    static unsafe uint CalcCRC(byte[] b) { fixed (byte* ptr = &b[0]) return CRC32.calculate_crc32(ptr, b.Length); }
 }
 
 namespace System.Runtime.CompilerServices
