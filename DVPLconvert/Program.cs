@@ -8,7 +8,6 @@ public static partial class Program
     static bool Compress = false;
     public static void Main(string[] args)
     {
-        CompressDVPLFile(@"E:\SteamLibrary\steamapps\common\World of Tanks Blitz\Data\regions_development.yaml");
         if (args.Length <= 0) 
         {
             Console.WriteLine(
