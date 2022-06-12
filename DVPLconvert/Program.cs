@@ -2,26 +2,26 @@
 using System.Collections.Generic;
 using System.IO;
 
-public static partial class Program
+public static unsafe partial class Program
 {
     static bool Verbose = false;
     static bool Compress = false;
     public static void Main(string[] args)
     {
-        if (args.Length <= 0) 
+        if (args.Length <= 0)
         {
             Console.WriteLine(
                 @" Usage: [Arguments] <folder or file path>
 
- -v == Verbose, will print debug information while do all work
+-v == Verbose, will print debug information while do all work
 [other arguments] -r [other arguments] <Folder path> == Enables recursive for given filder (required argument!!!)
 [other arguments] -c [other arguments] <Folder path> == Forces program to compress non .dvpl files to .dvpl
 [other arguments] -d [other arguments] <Folder path> == Forces program to decompress .dvpl files to non .dvpl
- -f <Folder path> == lists count of extentions of all files 
- -C == Enables compress ( MAY BREAK WEBP FILES !!! )
+-f <Folder path> == lists count of extentions of all files 
+-C == Enables compress ( MAY BREAK WEBP FILES !!! )
 "
                 );
-            throw new ArgumentException("No input files/folders/arguments given"); 
+            throw new ArgumentException("No input files/folders/arguments given");
         }
         bool recursive = false;
         bool ForceCompress = false;
@@ -73,8 +73,10 @@ public static partial class Program
                     if (recursive) DecompressDVPLFolderRecursively(arg);
                     else DecompressDVPLFolder(arg);
                 else
+                {
                     if (recursive) CompressDVPLFolderRecursively(arg);
-                else CompressDVPLFolder(arg);
+                    else CompressDVPLFolder(arg);
+                }
                 recursive = false;
                 ForceCompress = false;
                 ForceDecompress = false;

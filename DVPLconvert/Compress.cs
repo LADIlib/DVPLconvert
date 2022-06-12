@@ -3,15 +3,13 @@ using System;
 using System.IO;
 using System.Linq;
 
-public static partial class Program
+public static unsafe partial class Program
 {
     static void CompressDVPLFolderRecursively(string path)
     {
         Console.WriteLine("Starting compressing folder recursively");
         foreach (string file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
-        {
-            var ext = GetFileExtention(file);
-            if (ext != "dvpl")
+            if (GetFileExtention(file) != "dvpl")
                 try
                 {
                     if (Verbose)
@@ -22,15 +20,12 @@ public static partial class Program
                 {
                     Console.WriteLine(ex.StackTrace);
                 }
-        }
     }
     static void CompressDVPLFolder(string path)
     {
         Console.WriteLine("Starting compressing folder");
         foreach (string file in Directory.GetFiles(path, "*"))
-        {
-            var ext = GetFileExtention(file);
-            if (ext!="dvpl")
+            if (GetFileExtention(file) != "dvpl")
                 try
                 {
                     if (Verbose)
@@ -41,45 +36,35 @@ public static partial class Program
                 {
                     Console.WriteLine(ex.StackTrace);
                 }
-        }
     }
-    static unsafe void CompressDVPLFile(string path)
+    static void CompressDVPLFile(string path)
     {
-        byte[] Data = File.ReadAllBytes(path);
-        if (Data == null||Data.Length<0) throw new ArgumentNullException(nameof(Data));
-        byte[] OutData;
-        DVPLHeader Header;
-        if (Compress)
-        {
-            OutData = new byte[LZ4Codec.MaximumOutputSize(Data.Length)];
-            var OutLen = LZ4Codec.Encode(Data, OutData, LZ4Level.L12_MAX);
-            if (OutLen < 0) throw new Exception("LZ4 encode failed");
-            Array.Resize(ref OutData, OutLen);
-            if (OutLen > Data.Length) throw new Exception("WTF?");
-            Header = new DVPLHeader()
+        UnmanagedStream stream = new UnmanagedStream(File.OpenRead(path));
+        byte[] UncompressedData = stream.ReadValues<byte>(stream.Length);
+        stream.Dispose();
+        byte[] OutData = new byte[LZ4Codec.MaximumOutputSize(UncompressedData.Length)];
+        if (UncompressedData.Length != 0 && Compress)
+            fixed (byte* OD = &OutData[0], UD = &UncompressedData[0]) 
             {
-                sizeCompressed = OutData.Length,
-                sizeUncompressed = Data.Length,
-                storeType = OutData.Length == Data.Length ? CompressorType.None : CompressorType.Lz4HC,
-                crc32Compressed = CalcCRC(OutData),
-                marker = "DVPL".ToCharArray()
-            };
-        }
-        else
+                var OutLen = LZ4Codec.Encode(UD, UncompressedData.Length, OD, OutData.Length, LZ4Level.L12_MAX);
+                if (OutLen < 0 || OutLen > UncompressedData.Length) throw new Exception($"{path} LZ4 encode failed");
+                Array.Resize(ref OutData, OutLen);
+            }
+        else OutData = UncompressedData;
+        DVPLHeader Header = new DVPLHeader()
         {
-            OutData = Data;
-            Header = new DVPLHeader()
-            {
-                sizeCompressed = Data.Length,
-                sizeUncompressed = Data.Length,
-                storeType = CompressorType.None,
-                marker = "DVPL".ToCharArray(),
-                crc32Compressed = Data.Length == 0 ? 0 : CalcCRC(Data),
-            };
-        }
-        if (Verbose)
-            Console.WriteLine(Header);
+            sizeCompressed = OutData.Length,
+            storeType = OutData.Length == UncompressedData.Length ? cType.None : cType.Lz4HC,
+            sizeUncompressed = UncompressedData.Length,
+            crc32Compressed = OutData.Length is 0 ? 0 : CalcCRC(OutData),
+            marker = 0x4C505644 // LPVD
+        };
+        if (Verbose) Console.WriteLine(Header);
+        byte[] buf = new byte[OutData.Length + 20];
+        stream = new UnmanagedStream(buf);
+        stream.WriteValues(OutData);
+        stream.WriteValue(Header);
         File.Delete(path);
-        File.WriteAllBytes(path+".dvpl", OutData.Concat(StructuteToByteArray(Header)).ToArray());
+        File.WriteAllBytes(path + ".dvpl", buf);
     }
 }

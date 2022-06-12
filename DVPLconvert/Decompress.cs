@@ -2,9 +2,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using K4os.Compression.LZ4;
 
-public static partial class Program
+public static unsafe partial class Program
 {
     static void DecompressDVPLFolderRecursively(string path)
     {
@@ -41,26 +41,28 @@ public static partial class Program
             }
         }
     }
-    static unsafe void DecompressDVPLFile(string path)
+    static void DecompressDVPLFile(string path)
     {
-        byte[] UncompressedData;
-        byte[] DVPLFile = File.ReadAllBytes(path);
-        DVPLHeader Header = ByteArrayToStructure<DVPLHeader>(DVPLFile, DVPLFile.Length - Marshal.SizeOf(typeof(DVPLHeader)));
-        fixed (byte* ptr = &DVPLFile[0]) if (CRC32.calculate_crc32(ptr, Header.sizeCompressed) != Header.crc32Compressed) throw new Exception("CRC hash mismatch");
-        if(Verbose) Console.WriteLine(Header);
-        switch (Header.storeType)
-        {
-            case CompressorType.Lz4HC:
-            case CompressorType.Lz4:
-                UncompressedData = new byte[Header.sizeUncompressed];
-                K4os.Compression.LZ4.LZ4Codec.Decode(DVPLFile, 0, Header.sizeCompressed, UncompressedData, 0, Header.sizeUncompressed);
-                if (UncompressedData.Length != Header.sizeUncompressed) throw new Exception("Length is wrong");
-                break;
-            case CompressorType.None:
-                UncompressedData = DVPLFile[new Range(0, Header.sizeCompressed)].ToArray();
-                break;
-            default: throw new NotImplementedException($"{Header.storeType} arcs are not supported yet");
-        }
+        UnmanagedStream stream = new UnmanagedStream(File.OpenRead(path));
+        stream.Seek(SeekOrigin.End, -20);
+        DVPLHeader header = stream.ReadValue<DVPLHeader>();
+        if (header.marker != 0x4C505644) throw new Exception("Invalid magic");
+        stream.Seek(SeekOrigin.Begin, 0);
+        byte[] CompressedData = stream.ReadValues<byte>(header.sizeCompressed);
+        stream.Dispose();
+        byte[] UncompressedData = new byte[header.sizeUncompressed];
+        if (Verbose) Console.WriteLine(header);
+        if (UncompressedData.Length!=0&&CompressedData.Length!=0)
+            if (CalcCRC(CompressedData) == header.crc32Compressed) 
+                fixed (byte* CD = &CompressedData[0], UD = &UncompressedData[0])
+                    switch (header.storeType)
+                    {
+                        case cType.Lz4HC:
+                        case cType.Lz4: if (LZ4Codec.Decode(CD, CompressedData.Length, UD, UncompressedData.Length) != header.sizeUncompressed) throw new Exception($"{path} Length is wrong"); break;
+                        case cType.None: UncompressedData = CompressedData; break;
+                        default: throw new NotImplementedException($"{path} {header.storeType} arcs are not supported yet");
+                    }
+            else throw new Exception($"{path} CRC hash mismatch");
         File.Delete(path);
         File.WriteAllBytes(path.Replace(".dvpl", String.Empty), UncompressedData);
     }
