@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using UStream;
 
 public static unsafe partial class Program
 {
@@ -40,7 +41,7 @@ public static unsafe partial class Program
     static void CompressDVPLFile(string path)
     {
         UnmanagedStream stream = new UnmanagedStream(File.OpenRead(path));
-        byte[] UncompressedData = stream.ReadValues<byte>(stream.Length);
+        byte[] UncompressedData = stream.ReadValues<byte>((int)stream.Length);
         stream.Dispose();
         byte[] OutData = new byte[LZ4Codec.MaximumOutputSize(UncompressedData.Length)];
         if (UncompressedData.Length != 0 && Compress)

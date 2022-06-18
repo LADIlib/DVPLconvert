@@ -3,6 +3,8 @@ using System;
 using System.IO;
 using System.Linq;
 using K4os.Compression.LZ4;
+using UStream;
+
 
 public static unsafe partial class Program
 {
