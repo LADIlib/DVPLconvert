@@ -17,8 +17,9 @@
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
 		<PackageReference Include="K4os.Compression.LZ4" Version="1.1.11" />
 	</ItemGroup>
+
 	<ItemGroup>
-    
-  </ItemGroup>
+	  <PackageReference Include="UnmanagedStream" Version="1.0.4" />
+	</ItemGroup>
 
 </Project>
