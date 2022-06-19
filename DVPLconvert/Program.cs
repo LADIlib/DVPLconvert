@@ -14,6 +14,7 @@ public static unsafe partial class Program
                 @" Usage: [Arguments] <folder or file path>
 
 -v == Verbose, will print debug information while do all work
+-V == Debug Console.ReadLine();
 [other arguments] -r [other arguments] <Folder path> == Enables recursive for given filder (required argument!!!)
 [other arguments] -c [other arguments] <Folder path> == Forces program to compress non .dvpl files to .dvpl
 [other arguments] -d [other arguments] <Folder path> == Forces program to decompress .dvpl files to non .dvpl
@@ -27,10 +28,13 @@ public static unsafe partial class Program
         bool ForceCompress = false;
         bool ForceDecompress = false;
         bool CheckFolder = false;
+        bool Verbose1 = false;
         foreach(var arg in args)
         {
             if (!Verbose)
                 Verbose = arg == "-v";
+            if (!Verbose1)
+                Verbose1 = arg == "-V";
             if (!recursive)
                 recursive = arg == "-r";
             if (!ForceCompress)
@@ -93,7 +97,10 @@ public static unsafe partial class Program
             }
             else throw new Exception("args broken");
         }
-        Console.WriteLine("All work done");
-        Console.ReadLine();
+        if (Verbose1)
+        {
+            Console.WriteLine("All work done");
+            Console.ReadLine();
+        }
     }
 }
